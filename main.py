@@ -1,7 +1,9 @@
 import os
-from dotenv import load_dotenv
+
+import requests
 import telebot
 import yfinance as yf
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -11,6 +13,10 @@ bot = telebot.TeleBot(API_KEY, parse_mode=None)
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
+    response = requests.get('https://api.github.com/')
+    json_response = response.json()
+    for key, value in json_response.items():
+        print(f'{key} : {value}')
     bot.reply_to(message, "Howdy, how are you doing?")
 
 
@@ -27,12 +33,6 @@ def get_stocks(message):
         columns = ['stock']
         for index, row in data.iterrows():
             stock_position = len(stock_data) - 1
-            # print('sp: '+ str(stock_position))
-            # print('\nrow:')
-            # print(row)
-            # print('\nclose:')
-            # print(row['Close'])
-            # print()
             price = round(row['Close'], 2)
             format_date = row['Date'].strftime('%m/%d')
             response += f"{format_date}: {price}\n"
