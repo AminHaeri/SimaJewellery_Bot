@@ -8,9 +8,11 @@ load_dotenv()
 API_KEY = os.getenv('API_KEY')
 bot = telebot.TeleBot(API_KEY, parse_mode=None)
 
-@bot.message_handler(commands=['start','help'])
+
+@bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
     bot.reply_to(message, "Howdy, how are you doing?")
+
 
 @bot.message_handler(commands=['wsb'])
 def get_stocks(message):
@@ -44,5 +46,6 @@ def get_stocks(message):
         response += "\nStock Data"
         print(response)
         bot.send_message(message.chat.id, response)
+
 
 bot.polling()
