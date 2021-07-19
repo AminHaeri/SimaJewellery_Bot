@@ -70,8 +70,10 @@ def string_mesghal(mesghal_object):
     }
     return f"{consts.EMOJI_BANK} <b>{consts.MESGHAL_MSG_FA}</b>                                   " \
            f"{consts.EMPTY_TRICK}\n\n" \
-           f"{consts.EMOJI_BLACK_SPADE} #{consts.MESGHAL_BUY_FA}: <b>{convert_digit_en_fa(currency['downrate'])}</b>\n\n" \
-           f"{consts.EMOJI_BLACK_CLUB} #{consts.MESGHAL_SELL_FA}: <b>{convert_digit_en_fa(currency['uprate'])}</b>\n\n\n\n" \
+           f"{consts.EMOJI_BLACK_SPADE} #{consts.MESGHAL_BUY_FA}: " \
+           f"<b>{convert_digit_en_fa(currency['downrate'])}</b>\n\n" \
+           f"{consts.EMOJI_BLACK_CLUB} #{consts.MESGHAL_SELL_FA}: " \
+           f"<b>{convert_digit_en_fa(currency['uprate'])}</b>\n\n\n\n" \
            f"{consts.EMOJI_CLOCK_FACE_TWO} <b>{consts.MESGHAL_TIME_FA}:</b> " \
            f"{get_jalili_format(mesghal_object['time'], True, True)}\n\n" \
            f"{consts.EMPTY_TRICK}"
@@ -136,16 +138,17 @@ def modify_periodic_job_fetch(new_time):
     periodic_time = new_time
     scheduler.reschedule_job(job_id=job_periodic_fetch.id, trigger='interval', minutes=periodic_time)
 
+
 def gen_markup_only_changes_fetch():
     markup = InlineKeyboardMarkup()
     markup.row_width = 2
-    markup.add(InlineKeyboardButton('Yes', callback_data='cb_yes'), InlineKeyboardButton('No', callback_data='cb_no'))
+    markup.add(InlineKeyboardButton('On', callback_data='cb_on'), InlineKeyboardButton('Off', callback_data='cb_off'))
     return markup
 
 
-####################################### Telegram Bot Message Handlers #######################################
 @bot.message_handler(commands=['fetch'])
 def fetch_command(message):
+    print(message)
     if check_fetch_updated():
         response_string = fetch_string()
         print(response_string)
@@ -166,12 +169,12 @@ def test_fetch_command(message):
 @bot.message_handler(commands=['getprefs'])
 def get_prefs(message):
     prefs = f"<b>Mesghal</b>\n" \
-            f"{'uprate(rial):' : <30}{convert_digit_en_fa(mesghal['uprate']) : ^20}\n" \
-            f"{'downrate(rial):' : <30}{convert_digit_en_fa(mesghal['downrate']) : ^20}\n" \
+            f"{'uprate (rial):'}  {convert_digit_en_fa(mesghal['uprate'])}\n" \
+            f"{'downrate (rial):'}  {convert_digit_en_fa(mesghal['downrate'])}\n" \
             f"\n<b>Time</b>\n" \
-            f"{'periodic time(minute):' : <30}{convert_digit_en_fa(periodic_time) : ^20}\n" \
+            f"{'periodic time(minute):'}  {periodic_time}\n" \
             f"\n<b>Update</b>\n" \
-            f"{'only change:' : <30}{str(update_only_changes) : ^20}\n"
+            f"{'only change:'}  {'on' if update_only_changes else 'off'}\n"
 
     print(prefs)
     bot.reply_to(message, prefs, parse_mode='HTML')
@@ -207,12 +210,12 @@ def set_only_changes_fetch_request(message):
 @bot.callback_query_handler(func=lambda is_only_change: True)
 def callback_query_is_only_change(is_only_change):
     global update_only_changes
-    if is_only_change.data == 'cb_yes':
+    if is_only_change.data == 'cb_on':
         update_only_changes = True
-        bot.answer_callback_query(is_only_change.id, "You chose Yes.")
-    elif is_only_change.data == 'cb_no':
+        bot.answer_callback_query(is_only_change.id, "You chose On.")
+    elif is_only_change.data == 'cb_off':
         update_only_changes = False
-        bot.answer_callback_query(is_only_change.id, "The chose No.")
+        bot.answer_callback_query(is_only_change.id, "You chose Off.")
 
     bot.delete_message(chat_id=is_only_change.message.chat.id, message_id=is_only_change.message.id)
 
