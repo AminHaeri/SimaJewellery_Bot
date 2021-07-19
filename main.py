@@ -2,6 +2,7 @@ import os
 
 import requests
 import telebot
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from apscheduler.schedulers.background import BackgroundScheduler
 from dateutil import parser
 from dotenv import load_dotenv
@@ -19,11 +20,14 @@ scheduler = BackgroundScheduler()
 periodic_time = consts.PERIODIC_TIME
 job_periodic_fetch = None
 
-commands = ['fetch', 'testfetch', 'getprefs', 'setmeshgaluprate', 'setmeshgaldownrate', 'setperiodictime']
+commands = ['fetch', 'testfetch', 'getprefs', 'setmesghaluprate', 'setmesghaldownrate',
+            'setperiodictime', 'setonlychangesfetch']
 mesghal = {
     'uprate': consts.MESGHAL_UPRATE,
     'downrate': consts.MESGHAL_DOWNRATE
 }
+update_only_changes = True
+last_mesghal_object = None
 
 
 def fetch_finance_data():
@@ -34,6 +38,18 @@ def fetch_finance_data():
 
 def fetch_string():
     return string_mesghal(extract_mesghal(fetch_finance_data()))
+
+
+def check_fetch_updated():
+    global last_mesghal_object
+    mesghal_object = extract_mesghal(fetch_finance_data())
+    if update_only_changes:
+        if last_mesghal_object is not None and last_mesghal_object['p'] == mesghal_object['p']:
+            return False
+
+        last_mesghal_object = mesghal_object
+
+    return True
 
 
 def extract_mesghal(finance_object):
@@ -120,19 +136,31 @@ def modify_periodic_job_fetch(new_time):
     periodic_time = new_time
     scheduler.reschedule_job(job_id=job_periodic_fetch.id, trigger='interval', minutes=periodic_time)
 
+def gen_markup_only_changes_fetch():
+    markup = InlineKeyboardMarkup()
+    markup.row_width = 2
+    markup.add(InlineKeyboardButton('Yes', callback_data='cb_yes'), InlineKeyboardButton('No', callback_data='cb_no'))
+    return markup
+
 
 ####################################### Telegram Bot Message Handlers #######################################
 @bot.message_handler(commands=['fetch'])
 def fetch_command(message):
-    response_string = fetch_string()
-    print(response_string)
-    bot.send_message(chat_id=consts.CHANNEL_ID, text=response_string, parse_mode='HTML')
+    if check_fetch_updated():
+        response_string = fetch_string()
+        print(response_string)
+        bot.send_message(chat_id=consts.CHANNEL_ID, text=response_string, parse_mode='HTML')
+    else:
+        print(f"There is no changes to last prices")
 
 
 @bot.message_handler(commands=['testfetch'])
 def test_fetch_command(message):
-    response_string = fetch_string()
-    bot.reply_to(message, text=response_string, parse_mode='HTML')
+    if check_fetch_updated():
+        response_string = fetch_string()
+        bot.reply_to(message, text=response_string, parse_mode='HTML')
+    else:
+        bot.reply_to(message, f"There is no changes to last prices")
 
 
 @bot.message_handler(commands=['getprefs'])
@@ -141,19 +169,21 @@ def get_prefs(message):
             f"{'uprate(rial):' : <30}{convert_digit_en_fa(mesghal['uprate']) : ^20}\n" \
             f"{'downrate(rial):' : <30}{convert_digit_en_fa(mesghal['downrate']) : ^20}\n" \
             f"\n<b>Time</b>\n" \
-            f"{'periodic time(minute):' : <30}{convert_digit_en_fa(periodic_time) : ^20}"
+            f"{'periodic time(minute):' : <30}{convert_digit_en_fa(periodic_time) : ^20}\n" \
+            f"\n<b>Update</b>\n" \
+            f"{'only change:' : <30}{str(update_only_changes) : ^20}\n"
 
     print(prefs)
     bot.reply_to(message, prefs, parse_mode='HTML')
 
 
-@bot.message_handler(commands=['setmeshgaluprate'])
+@bot.message_handler(commands=['setmesghaluprate'])
 def set_mesghal_uprate_request(message):
     msg = bot.reply_to(message, f"Please enter the integer value of the up rate for mesghal")
     bot.register_next_step_handler(msg, set_mesghal_uprate)
 
 
-@bot.message_handler(commands=['setmeshgaldownrate'])
+@bot.message_handler(commands=['setmesghaldownrate'])
 def set_mesghal_downrate_request(message):
     msg = bot.reply_to(message, f"Please enter the integer value of the down rate for mesghal")
     bot.register_next_step_handler(msg, set_mesghal_downrate)
@@ -166,6 +196,25 @@ def set_periodic_time_request(message):
                                 f"{consts.PERIODIC_TIME_MAX}.\n"
                                 f"0 means it will turn off")
     bot.register_next_step_handler(msg, set_periodic_time)
+
+
+@bot.message_handler(commands=['setonlychangesfetch'])
+def set_only_changes_fetch_request(message):
+    bot.send_message(message.chat.id, "Do you want to have fetch only on changes?",
+                     reply_markup=gen_markup_only_changes_fetch())
+
+
+@bot.callback_query_handler(func=lambda is_only_change: True)
+def callback_query_is_only_change(is_only_change):
+    global update_only_changes
+    if is_only_change.data == 'cb_yes':
+        update_only_changes = True
+        bot.answer_callback_query(is_only_change.id, "You chose Yes.")
+    elif is_only_change.data == 'cb_no':
+        update_only_changes = False
+        bot.answer_callback_query(is_only_change.id, "The chose No.")
+
+    bot.delete_message(chat_id=is_only_change.message.chat.id, message_id=is_only_change.message.id)
 
 
 if __name__ == "__main__":
