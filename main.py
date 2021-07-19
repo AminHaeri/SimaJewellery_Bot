@@ -1,16 +1,13 @@
-import datetime
 import os
-import threading
 
 import requests
 import telebot
+from apscheduler.schedulers.background import BackgroundScheduler
 from dateutil import parser
 from dotenv import load_dotenv
-from apscheduler.schedulers.background import BackgroundScheduler
-from persiantools import digits
-from persiantools.jdatetime import JalaliDateTime
 
 import constants as consts
+from mathutils import *
 
 API_URL = 'https://call16.tgju.org/ajax.json?2021071622-20210716230060-LkhfJvGIxwKp8Wa6k9Ti'
 load_dotenv()
@@ -19,43 +16,14 @@ API_KEY = os.getenv('API_KEY')
 bot = telebot.TeleBot(API_KEY, parse_mode=None)
 scheduler = BackgroundScheduler()
 
-commands = ['fetch', 'testfetch', 'getprefs', 'setmeshgaluprate', 'setmeshgaldownrate', 'setperiodictime']
 periodic_time = consts.PERIODIC_TIME
+job_periodic_fetch = None
+
+commands = ['fetch', 'testfetch', 'getprefs', 'setmeshgaluprate', 'setmeshgaldownrate', 'setperiodictime']
 mesghal = {
     'uprate': consts.MESGHAL_UPRATE,
     'downrate': consts.MESGHAL_DOWNRATE
 }
-
-
-def convert_currency_int(currency):
-    return int(currency.replace(',', ''))
-
-
-def convert_int_currency(intvalue):
-    return '{:,}'.format(intvalue)
-
-
-def convert_date_jalili(dt):
-    return JalaliDateTime.to_jalali(
-        datetime.datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second))
-
-
-def get_jalili_format(dt, rtl, fa):
-    d = f"{dt.year}/{dt.month}/{dt.day}"
-    t = f"{dt.hour}:{dt.minute}:{dt.second}"
-
-    if fa:
-        d = digits.en_to_fa(d)
-        t = digits.en_to_fa(t)
-
-    if rtl:
-        return f"{t} - {d}"
-
-    return f"{d} - {t}"
-
-
-def convert_digit_en_fa(digit):
-    return digits.en_to_fa(str(digit))
 
 
 def fetch_finance_data():
@@ -129,23 +97,28 @@ def validate_periodic_time(message, func):
 def set_mesghal_uprate(message):
     if validate_rate(message, set_mesghal_uprate):
         mesghal['uprate'] = int(message.text)
-        msg = f"Mesghal up rate successfully changed to <b>{convert_digit_en_fa(mesghal['uprate'])}</b>"
+        msg = f"Mesghal up rate successfully changed to <b>{mesghal['uprate']}</b>"
         bot.reply_to(message, msg, parse_mode='HTML')
 
 
 def set_mesghal_downrate(message):
     if validate_rate(message, set_mesghal_downrate):
         mesghal['downrate'] = int(message.text)
-        msg = f"Mesghal down rate successfully changed to <b>{convert_digit_en_fa(mesghal['downrate'])}</b>"
+        msg = f"Mesghal down rate successfully changed to <b>{mesghal['downrate']}</b>"
         bot.reply_to(message, msg, parse_mode='HTML')
 
 
 def set_periodic_time(message):
     if validate_periodic_time(message, set_periodic_time):
-        global periodic_time
-        periodic_time = int(message.text)
-        msg = f"Periodic time successfully change to <b>{convert_digit_en_fa(periodic_time)}</b>"
+        modify_periodic_job_fetch(int(message.text))
+        msg = f"Periodic time successfully changed to <b>{periodic_time}</b>"
         bot.reply_to(message, msg, parse_mode='HTML')
+
+
+def modify_periodic_job_fetch(new_time):
+    global periodic_time
+    periodic_time = new_time
+    scheduler.reschedule_job(job_id=job_periodic_fetch.id, trigger='interval', minutes=periodic_time)
 
 
 ####################################### Telegram Bot Message Handlers #######################################
@@ -193,31 +166,12 @@ def set_periodic_time_request(message):
                                 f"{consts.PERIODIC_TIME_MAX}.\n"
                                 f"0 means it will turn off")
     bot.register_next_step_handler(msg, set_periodic_time)
-    # start_polling_thread()
-
-
-# @periodic_request.job(interval=timedelta(minutes=periodic_time))
-# def periodic_request_interval():
-#     print('periodic_request_interval')
-#     fetch_command({})
-
-
-# def start_periodic_request():
-#     print('periodic call')
-#     periodic_request.start()
-
-
-# def start_polling_thread():
-#     print(f"start new thread with: {periodic_time}")
-#     periodic_thread = threading.Thread(target=start_periodic_request)
-#     periodic_thread.start()
 
 
 if __name__ == "__main__":
-    # try:
-    #     start_polling_thread()
-    # except KeyboardInterrupt:
-    #     periodic_request.stop()
+    job_periodic_fetch = \
+        scheduler.add_job(func=fetch_command, trigger='interval', minutes=periodic_time, kwargs={'message': {}})
+    scheduler.start()
 
     print('bot polling')
     bot.polling(none_stop=True)
