@@ -1,6 +1,5 @@
 show - show full version of api data to bot
 fetch - show public version of api data to main channel
-testfetch -  test the 'fetch' command in bot
 getprefs - show list of all of preferences
 setmesghaluprate - change up rate for mesghal
 setmesghaldownrate - change down rate for mesghal
