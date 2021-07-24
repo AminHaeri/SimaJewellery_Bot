@@ -2,6 +2,8 @@ CHANNEL_ID = '-1001598037268'
 MESGHAL_UPRATE = 0  # Rial
 MESGHAL_DOWNRATE = 0  # Rial
 PERIODIC_TIME = 1  # Minutes
+UPDATE_ONLY_CHANGES = True
+
 PERIODIC_TIME_MIN = 0  # Minutes
 PERIODIC_TIME_MAX = 1000  # Minutes
 
@@ -11,6 +13,7 @@ MESGHAL_MSG_FA = 'لیست قیمت لحظه‌ای مثقال'
 MESGHAL_TIME_FA = 'زمان‌بروزرسانی'
 MESGHAL_BUY_FA = 'قیمت‌خرید'
 MESGHAL_SELL_FA = 'قیمت‌فروش'
+MESGHAL_RAW_FA = 'قیمت‌اصلی'
 
 EMPTY_TRICK = '<a href="">&#8204;</a>'
 
