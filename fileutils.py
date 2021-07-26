@@ -7,8 +7,8 @@ import specialmarkets
 HELP_FILE_DIR = 'help.html'
 SHARED_PREFS_FILE_DIR = 'shared_prefs.json'
 SHARED_PREFS_OBJECT = {
-    'mesghalSellRate': specialmarkets.MESGHAL_SELL_RATE,
-    'mesghalBuyRate': specialmarkets.MESGHAL_BUY_RATE,
+    'mesghalSellRate': specialmarkets.Mesghal.MESGHAL_SELL_RATE,
+    'mesghalBuyRate': specialmarkets.Mesghal.MESGHAL_BUY_RATE,
     'periodicTime': constants.PERIODIC_TIME,
     'updateOnlyChanges': constants.UPDATE_ONLY_CHANGES
 }

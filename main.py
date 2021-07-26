@@ -4,6 +4,7 @@ import telebot
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from telebot import apihelper
 
 import constants
 import fileutils
@@ -14,6 +15,7 @@ load_dotenv()
 
 API_KEY = os.getenv('API_KEY')
 bot = telebot.TeleBot(API_KEY, parse_mode=None)
+apihelper.ENABLE_MIDDLEWARE = True
 scheduler = BackgroundScheduler()
 
 job_periodic_fetch = None
@@ -160,7 +162,7 @@ def help_command(message):
 @decor_help_reply
 def show_command(message):
     mesghal_object = networkutils.extract_mesghal(networkutils.fetch_finance_data())
-    response_string = networkutils.string_mesghal(mesghal_object, True)
+    response_string = mesghal_object.get_html()
     print(response_string)
 
     bot.reply_to(message, text=response_string, parse_mode='HTML')
@@ -172,7 +174,7 @@ def fetch_command(message):
     print(message)
     mesghal_object = networkutils.extract_mesghal(networkutils.fetch_finance_data())
     if networkutils.check_fetch_updated(mesghal_object):
-        response_string = networkutils.string_mesghal(mesghal_object, False)
+        response_string = mesghal_object.get_mesghal_html(False)
         print(response_string)
         bot.send_message(chat_id=constants.CHANNEL_ID, text=response_string, parse_mode='HTML')
 
