@@ -4,37 +4,49 @@ import telebot
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-from telebot import apihelper
 
 import constants
 import fileutils
 import networkutils
+import security
 from mathutils import *
 
 load_dotenv()
-
 API_KEY = os.getenv('API_KEY')
+
+# telebot.apihelper.ENABLE_MIDDLEWARE = True
 bot = telebot.TeleBot(API_KEY, parse_mode=None)
-apihelper.ENABLE_MIDDLEWARE = True
+
 scheduler = BackgroundScheduler()
-
 job_periodic_fetch = None
-
 commands = ['show', 'fetch', 'getprefs', 'setmesghalsellrate', 'setmesghalBuyRate',
             'setperiodictime', 'setonlychangesfetch']
 
 
-def decor_help_reply(func):
+def decor_reply_help(func):
     def wrapper(*args, **kwargs):
         func(*args, **kwargs)
+
+        arg_message = args[0]
         message = None
-        if len(args) > 0:
-            arg_message = args[0]
-            if type(arg_message) is telebot.types.Message:
-                message = arg_message
-            elif type(arg_message) is telebot.types.CallbackQuery:
-                message = arg_message.message
-            bot.send_message(message.chat.id, f"OK. to get the list of commands /help")
+        if type(arg_message) is telebot.types.Message:
+            message = arg_message
+        elif type(arg_message) is telebot.types.CallbackQuery:
+            message = arg_message.message
+        bot.send_message(message.chat.id, f"OK. to get the list of commands /help")
+
+    return wrapper
+
+
+def decor_authorization(func):
+    def wrapper(*args, **kwargs):
+        arg_message: telebot.types.Message = args[0]
+        if security.is_user_authorized(arg_message):
+            func(*args, **kwargs)
+        else:
+            error_msg = f"Hello @{arg_message.from_user.username}\n" \
+                        f"You are not <b>authorized</b> to use this bot.\n\nSorry!!!"
+            bot.reply_to(arg_message, error_msg, parse_mode='HTML')
 
     return wrapper
 
@@ -74,7 +86,7 @@ def update_sharedprefs_file():
     fileutils.write_shared_prefs(fileutils.SHARED_PREFS_OBJECT)
 
 
-@decor_help_reply
+@decor_reply_help
 def set_mesghal_sell_rate(message):
     if validate_rate(message):
         fileutils.SHARED_PREFS_OBJECT['mesghalSellRate'] = int(message.text)
@@ -84,7 +96,7 @@ def set_mesghal_sell_rate(message):
     update_sharedprefs_file()
 
 
-@decor_help_reply
+@decor_reply_help
 def set_mesghal_buy_rate(message):
     if validate_rate(message):
         fileutils.SHARED_PREFS_OBJECT['mesghalBuyRate'] = int(message.text)
@@ -94,7 +106,7 @@ def set_mesghal_buy_rate(message):
         update_sharedprefs_file()
 
 
-@decor_help_reply
+@decor_reply_help
 def set_periodic_time(message):
     if validate_periodic_time(message):
         new_time = int(message.text)
@@ -152,14 +164,23 @@ def gen_markup_only_changes_fetch():
     return markup
 
 
+# @bot.middleware_handler(update_types=['message'])
+# def authorization(bot_instance, message: telebot.types.Message):
+#     error_msg = f"Hello @{message.from_user.username}\nYou are not authorized to use this bot.\n\nSorry !"
+#     bot.delete_message(message.chat.id, message.id)
+#     bot.send_message(message.chat.id, error_msg)
+
+
 @bot.message_handler(commands=['help'])
+@decor_authorization
 def help_command(message):
     help_string = f"List of command available:\n\n" + fileutils.read_help()
     bot.reply_to(message, text=help_string, parse_mode='HTML')
 
 
 @bot.message_handler(commands=['show'])
-@decor_help_reply
+@decor_authorization
+@decor_reply_help
 def show_command(message):
     mesghal_object = networkutils.extract_mesghal(networkutils.fetch_finance_data())
     response_string = mesghal_object.get_html()
@@ -169,7 +190,8 @@ def show_command(message):
 
 
 @bot.message_handler(commands=['fetch'])
-@decor_help_reply
+@decor_authorization
+@decor_reply_help
 def fetch_command(message):
     print(message)
     mesghal_object = networkutils.extract_mesghal(networkutils.fetch_finance_data())
@@ -190,7 +212,8 @@ def fetch_command(message):
 
 
 @bot.message_handler(commands=['getprefs'])
-@decor_help_reply
+@decor_authorization
+@decor_reply_help
 def get_prefs(message):
     prefs = f"<b>Mesghal</b>\n" \
             f"{'Sell Rate (Rial):'}  " \
@@ -207,6 +230,7 @@ def get_prefs(message):
 
 
 @bot.message_handler(commands=['setmesghalsellrate'])
+@decor_authorization
 def set_mesghal_sell_rate_request(message):
     response_string = f"Current sell rate: <b>{fileutils.SHARED_PREFS_OBJECT['mesghalSellRate']}</b>\n" \
                       f"Please enter <b>positive number</b>"
@@ -215,6 +239,7 @@ def set_mesghal_sell_rate_request(message):
 
 
 @bot.message_handler(commands=['setmesghalbuyrate'])
+@decor_authorization
 def set_mesghal_buy_rate_request(message):
     response_string = f"Current buy rate: <b>{fileutils.SHARED_PREFS_OBJECT['mesghalBuyRate']}</b>\n" \
                       f"Please enter <b>positive number</b>"
@@ -223,6 +248,7 @@ def set_mesghal_buy_rate_request(message):
 
 
 @bot.message_handler(commands=['setperiodictime'])
+@decor_authorization
 def set_periodic_time_request(message):
     msg = bot.reply_to(message,
                        text=f"Current periodic time: <b>{fileutils.SHARED_PREFS_OBJECT['periodicTime']}</b>."
@@ -235,13 +261,14 @@ def set_periodic_time_request(message):
 
 
 @bot.message_handler(commands=['setonlychangesfetch'])
+@decor_authorization
 def set_only_changes_fetch_request(message):
     bot.send_message(message.chat.id, "Do you want to have fetch only on changes?",
                      reply_markup=gen_markup_only_changes_fetch())
 
 
 @bot.callback_query_handler(func=lambda is_only_change: True)
-@decor_help_reply
+@decor_reply_help
 def callback_query_is_only_change(is_only_change):
     if is_only_change.data == 'cb_on':
         fileutils.SHARED_PREFS_OBJECT['updateOnlyChanges'] = True

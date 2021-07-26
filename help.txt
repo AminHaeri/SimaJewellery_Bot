@@ -1,3 +1,4 @@
+help - show list of all commands
 show - show full version of api data to bot
 fetch - show public version of api data to main channel
 getprefs - show list of all of preferences
