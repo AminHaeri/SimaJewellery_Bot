@@ -1,7 +1,7 @@
 show - show full version of api data to bot
 fetch - show public version of api data to main channel
 getprefs - show list of all of preferences
-setmesghaluprate - change up rate for mesghal
-setmesghaldownrate - change down rate for mesghal
+setmesghalsellrate - change sell rate for mesghal
+setmesghalbuyrate - change buy rate for mesghal
 setperiodictime - change periodic update to channel
 setonlychangesfetch - change state of update of the channel

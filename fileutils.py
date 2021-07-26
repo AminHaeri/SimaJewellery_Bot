@@ -1,15 +1,14 @@
 import json
-import constants
-
 from os import path
 
+import constants
 import specialmarkets
 
 HELP_FILE_DIR = 'help.html'
 SHARED_PREFS_FILE_DIR = 'shared_prefs.json'
 SHARED_PREFS_OBJECT = {
-    'mesghalUprate': specialmarkets.MESGHAL_UPRATE,
-    'mesghalDownrate': specialmarkets.MESGHAL_DOWNRATE,
+    'mesghalSellRate': specialmarkets.MESGHAL_SELL_RATE,
+    'mesghalBuyRate': specialmarkets.MESGHAL_BUY_RATE,
     'periodicTime': constants.PERIODIC_TIME,
     'updateOnlyChanges': constants.UPDATE_ONLY_CHANGES
 }

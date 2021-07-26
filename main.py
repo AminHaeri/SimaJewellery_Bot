@@ -18,7 +18,7 @@ scheduler = BackgroundScheduler()
 
 job_periodic_fetch = None
 
-commands = ['show', 'fetch', 'getprefs', 'setmesghaluprate', 'setmesghaldownrate',
+commands = ['show', 'fetch', 'getprefs', 'setmesghalsellrate', 'setmesghalBuyRate',
             'setperiodictime', 'setonlychangesfetch']
 
 
@@ -73,20 +73,20 @@ def update_sharedprefs_file():
 
 
 @decor_help_reply
-def set_mesghal_uprate(message):
+def set_mesghal_sell_rate(message):
     if validate_rate(message):
-        fileutils.SHARED_PREFS_OBJECT['mesghalUprate'] = int(message.text)
-        msg = f"Mesghal up rate successfully changed to: <b>{fileutils.SHARED_PREFS_OBJECT['mesghalUprate']}</b>"
+        fileutils.SHARED_PREFS_OBJECT['mesghalSellRate'] = int(message.text)
+        msg = f"Mesghal sell rate successfully changed to: <b>{fileutils.SHARED_PREFS_OBJECT['mesghalSellRate']}</b>"
         bot.reply_to(message, msg, parse_mode='HTML')
 
     update_sharedprefs_file()
 
 
 @decor_help_reply
-def set_mesghal_downrate(message):
+def set_mesghal_buy_rate(message):
     if validate_rate(message):
-        fileutils.SHARED_PREFS_OBJECT['mesghalDownrate'] = int(message.text)
-        msg = f"Mesghal down rate successfully changed to: <b>{fileutils.SHARED_PREFS_OBJECT['mesghalDownrate']}</b>"
+        fileutils.SHARED_PREFS_OBJECT['mesghalBuyRate'] = int(message.text)
+        msg = f"Mesghal buy rate successfully changed to: <b>{fileutils.SHARED_PREFS_OBJECT['mesghalBuyRate']}</b>"
         bot.reply_to(message, msg, parse_mode='HTML')
 
         update_sharedprefs_file()
@@ -191,33 +191,33 @@ def fetch_command(message):
 @decor_help_reply
 def get_prefs(message):
     prefs = f"<b>Mesghal</b>\n" \
-            f"{'uprate (rial):'}  " \
-            f"{convert_digit_en_fa(convert_int_currency(fileutils.SHARED_PREFS_OBJECT['mesghalUprate']))}\n" \
-            f"{'downrate (rial):'}  " \
-            f"{convert_digit_en_fa(convert_int_currency(fileutils.SHARED_PREFS_OBJECT['mesghalDownrate']))}\n" \
+            f"{'Sell Rate (Rial):'}  " \
+            f"{convert_digit_en_fa(convert_int_currency(fileutils.SHARED_PREFS_OBJECT['mesghalSellRate']))}\n" \
+            f"{'Buy Rate (Rial):'}  " \
+            f"{convert_digit_en_fa(convert_int_currency(fileutils.SHARED_PREFS_OBJECT['mesghalBuyRate']))}\n" \
             f"\n<b>Time</b>\n" \
-            f"{'periodic time(minute):'}  {fileutils.SHARED_PREFS_OBJECT['periodicTime']}\n" \
+            f"{'Periodic Time(Minute):'}  {fileutils.SHARED_PREFS_OBJECT['periodicTime']}\n" \
             f"\n<b>Update</b>\n" \
-            f"{'only change:'}  {'on' if fileutils.SHARED_PREFS_OBJECT['updateOnlyChanges'] else 'off'}\n"
+            f"{'Only Change:'}  {'on' if fileutils.SHARED_PREFS_OBJECT['updateOnlyChanges'] else 'off'}\n"
 
     print(prefs)
     bot.reply_to(message, prefs, parse_mode='HTML')
 
 
-@bot.message_handler(commands=['setmesghaluprate'])
-def set_mesghal_uprate_request(message):
-    response_string = f"Current up rate: <b>{fileutils.SHARED_PREFS_OBJECT['mesghalUprate']}</b>\n" \
+@bot.message_handler(commands=['setmesghalsellrate'])
+def set_mesghal_sell_rate_request(message):
+    response_string = f"Current sell rate: <b>{fileutils.SHARED_PREFS_OBJECT['mesghalSellRate']}</b>\n" \
                       f"Please enter <b>positive number</b>"
     msg = bot.reply_to(message, text=response_string, parse_mode='HTML')
-    bot.register_next_step_handler(msg, set_mesghal_uprate)
+    bot.register_next_step_handler(msg, set_mesghal_sell_rate)
 
 
-@bot.message_handler(commands=['setmesghaldownrate'])
-def set_mesghal_downrate_request(message):
-    response_string = f"Current down rate: <b>{fileutils.SHARED_PREFS_OBJECT['mesghalDownrate']}</b>\n" \
+@bot.message_handler(commands=['setmesghalbuyrate'])
+def set_mesghal_buy_rate_request(message):
+    response_string = f"Current buy rate: <b>{fileutils.SHARED_PREFS_OBJECT['mesghalBuyRate']}</b>\n" \
                       f"Please enter <b>positive number</b>"
     msg = bot.reply_to(message, text=response_string, parse_mode='HTML')
-    bot.register_next_step_handler(msg, set_mesghal_downrate)
+    bot.register_next_step_handler(msg, set_mesghal_buy_rate)
 
 
 @bot.message_handler(commands=['setperiodictime'])

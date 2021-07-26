@@ -10,8 +10,8 @@ MESGHAL_RAW_FA = 'قیمت‌اصلی'
 
 MESGHAL_INDEX = 33
 
-MESGHAL_UPRATE = 0  # Rial
-MESGHAL_DOWNRATE = 0  # Rial
+MESGHAL_SELL_RATE = 0  # Rial
+MESGHAL_BUY_RATE = 0  # Rial
 
 
 class SpecialMarkets:

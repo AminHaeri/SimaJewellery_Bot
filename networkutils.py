@@ -26,8 +26,8 @@ def extract_mesghal(finance_dict):
     [print(key, ' : ', value) for key, value in finance_dict.items()]
     mesghal_dict = finance_dict[specialmarkets.SpecialMarkets.mesghal_id]
     mesghal_object = specialmarkets.SpecialMarkets(**mesghal_dict)
-    mesghal_object.sell_price += fileutils.SHARED_PREFS_OBJECT['mesghalUprate']
-    mesghal_object.buy_price -= fileutils.SHARED_PREFS_OBJECT['mesghalDownrate']
+    mesghal_object.sell_price += fileutils.SHARED_PREFS_OBJECT['mesghalSellRate']
+    mesghal_object.buy_price -= fileutils.SHARED_PREFS_OBJECT['mesghalBuyRate']
     print(mesghal_object)
     return mesghal_object
 
