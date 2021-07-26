@@ -1,17 +1,15 @@
 import os
 
-import requests
 import telebot
 from apscheduler.schedulers.background import BackgroundScheduler
-from dateutil import parser
 from dotenv import load_dotenv
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 import constants
 import fileutils
+import networkutils
 from mathutils import *
 
-API_URL = 'https://call16.tgju.org/ajax.json?2021071622-20210716230060-LkhfJvGIxwKp8Wa6k9Ti'
 load_dotenv()
 
 API_KEY = os.getenv('API_KEY')
@@ -20,9 +18,8 @@ scheduler = BackgroundScheduler()
 
 job_periodic_fetch = None
 
-commands = ['get', 'fetch', 'getprefs', 'setmesghaluprate', 'setmesghaldownrate',
+commands = ['show', 'fetch', 'getprefs', 'setmesghaluprate', 'setmesghaldownrate',
             'setperiodictime', 'setonlychangesfetch']
-last_mesghal_object = None
 
 
 def decor_help_reply(func):
@@ -31,7 +28,6 @@ def decor_help_reply(func):
         message = None
         if len(args) > 0:
             arg_message = args[0]
-            print(arg_message)
             if type(arg_message) is telebot.types.Message:
                 message = arg_message
             elif type(arg_message) is telebot.types.CallbackQuery:
@@ -39,57 +35,6 @@ def decor_help_reply(func):
             bot.send_message(message.chat.id, f"OK. to get the list of commands /help")
 
     return wrapper
-
-
-def fetch_finance_data():
-    response = requests.get(API_URL)
-    json_response = response.json()
-    return json_response
-
-
-def check_fetch_updated(mesghal_object):
-    global last_mesghal_object
-    if fileutils.SHARED_PREFS_OBJECT['updateOnlyChanges']:
-        if last_mesghal_object is not None and last_mesghal_object['p'] == mesghal_object['p']:
-            return False
-
-        last_mesghal_object = mesghal_object
-
-    return True
-
-
-def extract_mesghal(finance_object):
-    mesghal_object = finance_object['current'][constants.MESGHAL_TEXT]
-    return {
-        'p': convert_currency_int(mesghal_object['p']),
-        'uprate': convert_currency_int(mesghal_object['p']) + fileutils.SHARED_PREFS_OBJECT['mesghalUprate'],
-        'downrate': convert_currency_int(mesghal_object['p']) - fileutils.SHARED_PREFS_OBJECT['mesghalDownrate'],
-        'time': convert_date_jalili(parser.parse(mesghal_object['ts']))
-    }
-
-
-def string_mesghal(mesghal_object, is_raw):
-    currency = {
-        'p': convert_int_currency(mesghal_object['p']),
-        'uprate': convert_int_currency(mesghal_object['uprate']),
-        'downrate': convert_int_currency(mesghal_object['downrate'])
-    }
-    title = f"{constants.EMOJI_BANK} <b>{constants.MESGHAL_MSG_FA}</b>                                   " \
-            f"{constants.EMPTY_TRICK}\n\n"
-
-    raw = f"{constants.EMOJI_MONEY_BAG} #{constants.MESGHAL_RAW_FA}: " \
-          f"<b>{convert_digit_en_fa(currency['p'])}</b>\n\n"
-
-    rates = f"{constants.EMOJI_BLACK_SPADE} #{constants.MESGHAL_BUY_FA}: " \
-            f"<b>{convert_digit_en_fa(currency['downrate'])}</b>\n\n" \
-            f"{constants.EMOJI_BLACK_CLUB} #{constants.MESGHAL_SELL_FA}: " \
-            f"<b>{convert_digit_en_fa(currency['uprate'])}</b>\n\n\n\n"
-
-    time = f"{constants.EMOJI_CLOCK_FACE_TWO} <b>{constants.MESGHAL_TIME_FA}:</b> " \
-           f"{get_jalili_format(mesghal_object['time'], True, True)}\n\n" \
-           f"{constants.EMPTY_TRICK}"
-
-    return title + (raw if is_raw else '') + rates + time
 
 
 def validate_rate(message):
@@ -214,8 +159,8 @@ def help_command(message):
 @bot.message_handler(commands=['show'])
 @decor_help_reply
 def show_command(message):
-    mesghal_object = extract_mesghal(fetch_finance_data())
-    response_string = string_mesghal(mesghal_object, True)
+    mesghal_object = networkutils.extract_mesghal(networkutils.fetch_finance_data())
+    response_string = networkutils.string_mesghal(mesghal_object, True)
     print(response_string)
 
     bot.reply_to(message, text=response_string, parse_mode='HTML')
@@ -225,9 +170,9 @@ def show_command(message):
 @decor_help_reply
 def fetch_command(message):
     print(message)
-    mesghal_object = extract_mesghal(fetch_finance_data())
-    if check_fetch_updated(mesghal_object):
-        response_string = string_mesghal(mesghal_object, False)
+    mesghal_object = networkutils.extract_mesghal(networkutils.fetch_finance_data())
+    if networkutils.check_fetch_updated(mesghal_object):
+        response_string = networkutils.string_mesghal(mesghal_object, False)
         print(response_string)
         bot.send_message(chat_id=constants.CHANNEL_ID, text=response_string, parse_mode='HTML')
 

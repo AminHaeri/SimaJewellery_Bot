@@ -3,11 +3,13 @@ import constants
 
 from os import path
 
+import specialmarkets
+
 HELP_FILE_DIR = 'help.html'
 SHARED_PREFS_FILE_DIR = 'shared_prefs.json'
 SHARED_PREFS_OBJECT = {
-    'mesghalUprate': constants.MESGHAL_UPRATE,
-    'mesghalDownrate': constants.MESGHAL_DOWNRATE,
+    'mesghalUprate': specialmarkets.MESGHAL_UPRATE,
+    'mesghalDownrate': specialmarkets.MESGHAL_DOWNRATE,
     'periodicTime': constants.PERIODIC_TIME,
     'updateOnlyChanges': constants.UPDATE_ONLY_CHANGES
 }
