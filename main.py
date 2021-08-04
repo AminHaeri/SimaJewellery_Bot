@@ -27,20 +27,22 @@ def decor_reply_help(func):
     def wrapper(*args, **kwargs):
         func(*args, **kwargs)
 
-        arg_message = args[0]
+        arg_message = args[0] if len(args) > 0 else kwargs['message']
         message = None
         if type(arg_message) is telebot.types.Message:
             message = arg_message
         elif type(arg_message) is telebot.types.CallbackQuery:
             message = arg_message.message
-        bot.send_message(message.chat.id, f"OK. to get the list of commands /help")
+
+        if message.chat is not None:
+            bot.send_message(message.chat.id, f"OK. to get the list of commands /help")
 
     return wrapper
 
 
 def decor_authorization(func):
     def wrapper(*args, **kwargs):
-        arg_message: telebot.types.Message = args[0]
+        arg_message: telebot.types.Message = args[0] if len(args) > 0 else kwargs['message']
         if security.is_user_authorized(arg_message):
             func(*args, **kwargs)
         else:
@@ -129,12 +131,14 @@ def add_periodic_job_fetch():
     if job_periodic_fetch is not None:
         return
 
+    user = telebot.types.User(0, True, constants.BOT_USERNAME, username=constants.BOT_USERNAME)
+    msg = telebot.types.Message(0, user, None, None, None, [], None)
     job_periodic_fetch = scheduler.add_job(
         func=fetch_command,
         trigger='interval',
-        minutes=fileutils.SHARED_PREFS_OBJECT['periodicTime'],
+        minutes=fileutils.SHARED_PREFS_OBJECT['periodicTime'] * 2,
         args={},
-        kwargs={'message': {}})
+        kwargs={'message': msg})
 
 
 def modify_periodic_job_fetch():
@@ -200,7 +204,7 @@ def fetch_command(message):
         print(response_string)
         bot.send_message(chat_id=constants.CHANNEL_ID, text=response_string, parse_mode='HTML')
 
-        if type(message) is telebot.types.Message:
+        if type(message) is telebot.types.Message and message.chat is not None:
             bot.reply_to(message, text=response_string, parse_mode='HTML')
     else:
         response_string = f"There is no changes to last data." \

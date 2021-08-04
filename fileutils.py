@@ -1,4 +1,6 @@
 import json
+import os
+import sys
 from os import path
 
 import constants
@@ -28,15 +30,18 @@ def load_prefs_from_disk():
 
 
 def read_shared_prefs():
-    with open(SHARED_PREFS_FILE_DIR, 'r') as read_file:
+    # with open(SHARED_PREFS_FILE_DIR, 'r') as read_file:
+    with open(os.path.join(sys.path[0], SHARED_PREFS_FILE_DIR), "w") as read_file:
         return json.load(read_file)
 
 
 def write_shared_prefs(data):
-    with open(SHARED_PREFS_FILE_DIR, 'w') as write_file:
+    # with open(SHARED_PREFS_FILE_DIR, 'w') as write_file:
+    with open(os.path.join(sys.path[0], SHARED_PREFS_FILE_DIR), "w") as write_file:
         json.dump(data, write_file)
 
 
 def read_help():
-    with open(HELP_FILE_DIR, 'r') as read_file:
+    # with open(HELP_FILE_DIR, 'r') as read_file:
+    with open(os.path.join(sys.path[0], HELP_FILE_DIR), "r") as read_file:
         return read_file.read()

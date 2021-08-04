@@ -20,7 +20,7 @@ def fetch_finance_data():
 
 
 def extract_mesghal(finance_dict):
-    [print(key, ' : ', value) for key, value in finance_dict.items()]
+    # [print(key, ' : ', value) for key, value in finance_dict.items()]
     mesghal_dict = finance_dict[specialmarkets.Mesghal.MESGHAL_ID]
 
     mesghal_dict['sell_rate'] = fileutils.SHARED_PREFS_OBJECT['mesghalSellRate']
@@ -30,10 +30,10 @@ def extract_mesghal(finance_dict):
     return mesghal_object
 
 
-def check_fetch_updated(mesghal_object):
+def check_fetch_updated(mesghal_object: specialmarkets.Mesghal):
     global last_mesghal_object
     if fileutils.SHARED_PREFS_OBJECT['updateOnlyChanges']:
-        if last_mesghal_object is not None and last_mesghal_object['p'] == mesghal_object['p']:
+        if last_mesghal_object is not None and last_mesghal_object.price == mesghal_object.price:
             return False
 
         last_mesghal_object = mesghal_object
