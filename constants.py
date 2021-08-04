@@ -1,10 +1,10 @@
 CHANNEL_ID = '-1001598037268'
 BOT_USERNAME = 'zoheiri_bot'
-PERIODIC_TIME = 1  # Minutes
+PERIODIC_TIME = 1  # Seconds
 UPDATE_ONLY_CHANGES = True
 
-PERIODIC_TIME_MIN = 0  # Minutes
-PERIODIC_TIME_MAX = 1000  # Minutes
+PERIODIC_TIME_MIN = 0  # Seconds
+PERIODIC_TIME_MAX = 60 * 1000  # Seconds
 
 EMPTY_TRICK = '<a href="">&#8204;</a>'
 

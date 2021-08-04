@@ -136,7 +136,7 @@ def add_periodic_job_fetch():
     job_periodic_fetch = scheduler.add_job(
         func=fetch_command,
         trigger='interval',
-        minutes=fileutils.SHARED_PREFS_OBJECT['periodicTime'] * 2,
+        seconds=fileutils.SHARED_PREFS_OBJECT['periodicTime'],
         args={},
         kwargs={'message': msg})
 
@@ -148,7 +148,7 @@ def modify_periodic_job_fetch():
         scheduler.reschedule_job(
             job_id=job_periodic_fetch.id,
             trigger='interval',
-            minutes=fileutils.SHARED_PREFS_OBJECT['periodicTime'])
+            seconds=fileutils.SHARED_PREFS_OBJECT['periodicTime'])
 
 
 def remove_periodic_job_fetch():
@@ -225,7 +225,7 @@ def get_prefs(message):
             f"{'Buy Rate (Rial):'}  " \
             f"{convert_digit_en_fa(convert_int_currency(fileutils.SHARED_PREFS_OBJECT['mesghalBuyRate']))}\n" \
             f"\n<b>Time</b>\n" \
-            f"{'Periodic Time(Minute):'}  {fileutils.SHARED_PREFS_OBJECT['periodicTime']}\n" \
+            f"{'Periodic Time(Seconds):'}  {fileutils.SHARED_PREFS_OBJECT['periodicTime']}\n" \
             f"\n<b>Update</b>\n" \
             f"{'Only Change:'}  {'on' if fileutils.SHARED_PREFS_OBJECT['updateOnlyChanges'] else 'off'}\n"
 

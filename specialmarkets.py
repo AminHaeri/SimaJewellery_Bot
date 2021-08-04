@@ -110,7 +110,7 @@ class Mesghal(SpecialMarkets):
                f"{constants.EMPTY_TRICK}"
 
     def get_mesghal_html(self, is_raw):
-        title = f"{constants.EMOJI_BANK} <b>{self.MESGHAL_MSG_FA}</b>{(' ' * 30)}" \
+        title = f"{constants.EMOJI_BANK} <b>{self.MESGHAL_MSG_FA}</b>{(' ' * 20)}" \
                 f"{constants.EMPTY_TRICK}\n\n"
 
         raw = f"{constants.EMOJI_MONEY_BAG} #{self.MESGHAL_RAW_FA}: " \
