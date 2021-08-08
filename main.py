@@ -69,7 +69,7 @@ def validate_rate(message):
 
 def validate_periodic_time(message):
     error_string = f"Periodic time should a be a number between " \
-                   f"<b>{constants.PERIODIC_TIME_MIN}</b> and <b>{constants.PERIODIC_TIME_MAX}</b>."
+                   f"<b>{constants.PERIODIC_TIME_MIN}</b> and <b>{constants.PERIODIC_TIME_MAX}</b> or <b>0</b>."
 
     time = message.text
     if not time.isdigit():
@@ -77,7 +77,7 @@ def validate_periodic_time(message):
         return False
 
     time = int(time)
-    if time < constants.PERIODIC_TIME_MIN or time > constants.PERIODIC_TIME_MAX:
+    if time != 0 and (time < constants.PERIODIC_TIME_MIN or time > constants.PERIODIC_TIME_MAX):
         bot.reply_to(message, text=error_string, parse_mode='HTML')
         return False
 
@@ -114,7 +114,7 @@ def set_periodic_time(message):
         new_time = int(message.text)
         fileutils.SHARED_PREFS_OBJECT['periodicTime'] = new_time
         msg = ''
-        if new_time > 0:
+        if new_time >= constants.PERIODIC_TIME_MIN:
             modify_periodic_job_fetch()
             msg = f"Periodic time successfully changed to: <b>{fileutils.SHARED_PREFS_OBJECT['periodicTime']}</b>"
         elif new_time == 0:
@@ -227,7 +227,7 @@ def get_prefs(message):
             f"\n<b>Time</b>\n" \
             f"{'Periodic Time(Seconds):'}  {fileutils.SHARED_PREFS_OBJECT['periodicTime']}\n" \
             f"\n<b>Update</b>\n" \
-            f"{'Only Change:'}  {'on' if fileutils.SHARED_PREFS_OBJECT['updateOnlyChanges'] else 'off'}\n"
+            f"{'Only Change:'}  {'on' if fileutils.SHARED_PREFS_OBJECT['updateOnlyChanges'] else 'off'}\n"\
 
     print(prefs)
     bot.reply_to(message, prefs, parse_mode='HTML')
@@ -259,7 +259,7 @@ def set_periodic_time_request(message):
                             f"\nPlease enter number between "
                             f"<b>{constants.PERIODIC_TIME_MIN}</b> to "
                             f"<b>{constants.PERIODIC_TIME_MAX}</b>.\n\n"
-                            f"<b>{constants.PERIODIC_TIME_MIN}</b> will turn it off.",
+                            f"<b>0</b> will turn it off.",
                        parse_mode='HTML')
     bot.register_next_step_handler(msg, set_periodic_time)
 
@@ -285,13 +285,12 @@ def callback_query_is_only_change(is_only_change):
     update_sharedprefs_file()
 
 
-if __name__ == "__main__":
-    fileutils.load_prefs_from_disk()
+fileutils.load_prefs_from_disk()
 
-    if fileutils.SHARED_PREFS_OBJECT['periodicTime'] > 0:
-        add_periodic_job_fetch()
+if fileutils.SHARED_PREFS_OBJECT['periodicTime'] > 0:
+    add_periodic_job_fetch()
 
-    scheduler.start()
+scheduler.start()
 
-    print('bot polling')
-    bot.polling(none_stop=True)
+print('bot polling')
+bot.polling(none_stop=True)
